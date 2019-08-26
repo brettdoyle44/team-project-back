@@ -6,6 +6,8 @@ const cors = require('cors')
 const graphqlHttp = require('express-graphql')
 const { buildSchema } = require('graphql')
 const League = require('./app/models/league')
+const User = require('./app/models/user')
+const bcrypt = require('bcrypt')
 
 // require route files
 const exampleRoutes = require('./app/routes/example_routes')
@@ -37,8 +39,6 @@ app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:7165' }))
 // define port for API to run on
 const port = process.env.PORT || 4741
 
-const leagues = []
-
 app.use('/graphql', graphqlHttp({
   schema: buildSchema(`
     type League {
@@ -50,12 +50,23 @@ app.use('/graphql', graphqlHttp({
       dateStart: String!
     }
 
+    type User {
+      _id: ID!
+      email: String!
+      password: String
+    }
+
     input LeagueInput {
       name: String!
       description: String!
       game: String!
       maxTeams: Int!
       dateStart: String!
+    }
+
+    input UserInput {
+      email: String!
+      password: String!
     }
 
     type RootQuery {
@@ -65,6 +76,7 @@ app.use('/graphql', graphqlHttp({
 
     type RootMutation {
       createLeague(leagueInput: LeagueInput): League
+      createUser(userInput: UserInput): User
     }
 
     schema {
@@ -74,7 +86,15 @@ app.use('/graphql', graphqlHttp({
     `),
   rootValue: {
     leagues: () => {
-      return leagues
+      return League.find()
+        .then(leagues => {
+          return leagues.map(league => {
+            return { ...league._doc, _id: league.id }
+          })
+        })
+        .catch(err => {
+          throw err
+        })
     },
     createLeague: args => {
       const league = new League({
@@ -82,16 +102,51 @@ app.use('/graphql', graphqlHttp({
         description: args.leagueInput.description,
         game: args.leagueInput.game,
         maxTeams: args.leagueInput.maxTeams,
-        dateStart: new Date(args.leagueInput.dateStart)
+        dateStart: new Date(args.leagueInput.dateStart),
+        leagueCreator: '5d6448116aaa5549f72d44a4'
       })
+      let createdLeague
       return league
         .save()
         .then(result => {
-          console.log(result)
-          return result
+          createdLeague = { ...result._doc, _id: result._doc._id.toString() }
+          return User.findById('5d6448116aaa5549f72d44a4')
+        })
+        .then(user => {
+          if (!user) {
+            throw new Error('User not found.')
+          }
+          user.createdLeagues.push(league)
+          return user.save()
+        })
+        .then(result => {
+          return createdLeague
         })
         .catch(err => {
           console.log(err)
+          throw err
+        })
+    },
+    createUser: args => {
+      return User.findOne({email: args.userInput.email})
+        .then(user => {
+          if (user) {
+            throw new Error('User exists already.')
+          }
+          return bcrypt
+            .hash(args.userInput.password, 12)
+        })
+        .then(hashedPassword => {
+          const user = new User({
+            email: args.userInput.email,
+            password: hashedPassword
+          })
+          return user.save()
+        })
+        .then(result => {
+          return { ...result._doc, password: null, _id: result.id }
+        })
+        .catch(err => {
           throw err
         })
     }

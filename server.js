@@ -3,6 +3,9 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const cors = require('cors')
+const graphqlHttp = require('express-graphql')
+const { buildSchema } = require('graphql')
+const League = require('./app/models/league')
 
 // require route files
 const exampleRoutes = require('./app/routes/example_routes')
@@ -33,6 +36,68 @@ app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:7165' }))
 
 // define port for API to run on
 const port = process.env.PORT || 4741
+
+const leagues = []
+
+app.use('/graphql', graphqlHttp({
+  schema: buildSchema(`
+    type League {
+      _id: ID!
+      name: String!
+      description: String!
+      game: String!
+      maxTeams: Int!
+      dateStart: String!
+    }
+
+    input LeagueInput {
+      name: String!
+      description: String!
+      game: String!
+      maxTeams: Int!
+      dateStart: String!
+    }
+
+    type RootQuery {
+      leagues: [League!]!
+
+    }
+
+    type RootMutation {
+      createLeague(leagueInput: LeagueInput): League
+    }
+
+    schema {
+      query: RootQuery
+      mutation: RootMutation
+    }
+    `),
+  rootValue: {
+    leagues: () => {
+      return leagues
+    },
+    createLeague: args => {
+      const league = new League({
+        name: args.leagueInput.name,
+        description: args.leagueInput.description,
+        game: args.leagueInput.game,
+        maxTeams: args.leagueInput.maxTeams,
+        dateStart: new Date(args.leagueInput.dateStart)
+      })
+      return league
+        .save()
+        .then(result => {
+          console.log(result)
+          return result
+        })
+        .catch(err => {
+          console.log(err)
+          throw err
+        })
+    }
+  },
+  graphiql: true
+}))
 
 // this middleware makes it so the client can use the Rails convention
 // of `Authorization: Token token=<token>` OR the Express convention of

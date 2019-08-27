@@ -3,7 +3,10 @@ const League = require('../../app/models/league')
 const { singleLeague, user } = require('./merge')
 
 module.exports = {
-  joinLeagues: async () => {
+  joinLeagues: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error('Unauthenticated')
+    }
     try {
       const joinLeagues = await JoinLeague.find()
       return joinLeagues.map(joinLeague => {
@@ -20,12 +23,15 @@ module.exports = {
       throw err
     }
   },
-  addTeam: async args => {
+  addTeam: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error('Unauthenticated')
+    }
     const getLeague = await League.findOne({
       _id: args.leagueId
     })
     const joinLeague = new JoinLeague({
-      user: '5d6448116aaa5549f72d44a4',
+      user: req.userId,
       league: getLeague
     })
     const result = await joinLeague.save()
@@ -38,7 +44,10 @@ module.exports = {
       updatedAt: new Date(result._doc.createdAt.toISOString())
     }
   },
-  removeTeam: async args => {
+  removeTeam: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error('Unauthenticated')
+    }
     try {
       const getJoinedLeague = await JoinLeague.findById(args.joinLeagueId).populate('league')
       const league = {

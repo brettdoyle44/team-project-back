@@ -1,32 +1,35 @@
 const User = require('../../app/models/user')
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 
 module.exports = {
   createUser: async args => {
     try {
-      const user = await User.findOne({
-        email: args.userInput.email
-      })
-      if (user) {
+      const existingUser = await User.findOne({ email: args.userInput.email })
+      if (existingUser) {
         throw new Error('User exists already.')
       }
-      const hashedPassword = bcrypt.hash(args.userInput.password, 12)
-      const newUser = new User({
+      const hashedPassword = await bcrypt.hash(args.userInput.password, 12)
+
+      const user = new User({
         email: args.userInput.email,
         password: hashedPassword
       })
-      const result = await newUser.save()
-      return {
-        ...result._doc,
-        password: null,
-        _id: result.id
-      }
+
+      const result = await user.save()
+
+      return { ...result._doc, password: null, _id: result.id }
     } catch (err) {
       throw err
     }
   },
-  login: async ({ email, password }) => {
-    const user = User.findOne({ email: email })
+  login: async ({
+    email,
+    password
+  }) => {
+    const user = await User.findOne({
+      email: email
+    })
     if (!user) {
       throw new Error('Invalid credentials')
     }
@@ -34,5 +37,12 @@ module.exports = {
     if (!isEqual) {
       throw new Error('Invalid credentials')
     }
+    const token = jwt.sign({
+      userId: user.id,
+      email: user.email
+    }, 'somereallysupersecretkey', {
+      expiresIn: '1hr'
+    })
+    return { userId: user.id, token: token, tokenExpiration: 1 }
   }
 }

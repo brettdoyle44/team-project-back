@@ -19,14 +19,17 @@ module.exports = {
       throw err
     }
   },
-  createLeague: async args => {
+  createLeague: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error('Unauthenticated')
+    }
     const league = new League({
       name: args.leagueInput.name,
       description: args.leagueInput.description,
       game: args.leagueInput.game,
       maxTeams: args.leagueInput.maxTeams,
       dateStart: new Date(args.leagueInput.dateStart),
-      leagueCreator: '5d6448116aaa5549f72d44a4'
+      leagueCreator: req.userId
     })
     let createdLeague
     try {
@@ -37,7 +40,7 @@ module.exports = {
         date: new Date(league._doc.date).toISOString(),
         leagueCreator: user.bind(this, result._doc.creator)
       }
-      const singleUser = await User.findById('5d6448116aaa5549f72d44a4')
+      const singleUser = await User.findById(req.userId)
       if (!singleUser) {
         throw new Error('User not found.')
       }

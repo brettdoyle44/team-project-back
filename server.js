@@ -21,6 +21,7 @@ const db = require('./config/db')
 
 // require configured passport authentication middleware
 const auth = require('./lib/auth')
+const isAuth = require('./middleware/is-auth')
 
 // establish database connection
 mongoose.Promise = global.Promise
@@ -37,6 +38,8 @@ app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:7165' }))
 
 // define port for API to run on
 const port = process.env.PORT || 4741
+
+app.use(isAuth)
 
 app.use('/graphql', graphqlHttp({
   schema: graphqlSchema,

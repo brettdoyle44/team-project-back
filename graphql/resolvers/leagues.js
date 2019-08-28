@@ -11,7 +11,7 @@ module.exports = {
         return {
           ...league._doc,
           _id: league.id,
-          date: new Date(league._doc.date).toISOString(),
+          dateStart: new Date(league._doc.dateStart).toISOString(),
           creator: user.bind(this, league._doc.creator)
         }
       })
@@ -37,7 +37,7 @@ module.exports = {
       createdLeague = {
         ...result._doc,
         _id: result._doc._id.toString(),
-        date: new Date(league._doc.date).toISOString(),
+        dateStart: new Date(league._doc.dateStart).toISOString(),
         leagueCreator: user.bind(this, result._doc.creator)
       }
       const singleUser = await User.findById(req.userId)

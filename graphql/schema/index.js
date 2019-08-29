@@ -49,6 +49,8 @@ module.exports = buildSchema(`
     leagues: [League!]!
     joinLeagues: [JoinLeague!]!
     login(email: String!, password: String!): UserAuth!
+    creator(_id: ID!): User!
+    league(leagueId: ID): League!
   }
 
   type RootMutation {
@@ -56,6 +58,7 @@ module.exports = buildSchema(`
     createUser(userInput: UserInput): User
     addTeam(leagueId: ID!): JoinLeague!
     removeTeam(joinLeagueId: ID!): League!
+    removeLeague(leagueId: ID!): League!
   }
 
   schema {

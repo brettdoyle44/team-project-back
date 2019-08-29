@@ -1,7 +1,7 @@
 const League = require('../../app/models/league')
 // const { user } = require('./merge')
 const User = require('../../app/models/user')
-const { transformLeague } = require('./merge')
+const { transformLeague, user } = require('./merge')
 
 module.exports = {
   leagues: async () => {
@@ -37,6 +37,52 @@ module.exports = {
       leagueCreator.createdLeagues.push(league)
       await leagueCreator.save()
       return createdLeague
+    } catch (err) {
+      throw err
+    }
+  },
+  creator: async ({
+    _id
+  }) => {
+    const user = await User.findOne({
+      _id: _id
+    })
+    if (!user) {
+      throw new Error('User does not exist')
+    }
+    return { createdLeagues: user.createdLeagues, email: user.email }
+  },
+  removeLeague: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error('Unauthenticated')
+    }
+    try {
+      const getLeague = await League.findById(args.leagueId).populate('league')
+      const league = {
+        ...getLeague.league._doc,
+        _id: getLeague.league.id,
+        leagueCreator: user.bind(this, getLeague.league._doc.leagueCreator)
+      }
+      await League.deleteOne({
+        _id: args.leagueId
+      })
+      return league
+    } catch (err) {
+      throw err
+    }
+  },
+  league: async (args, req) => {
+    if (!req.isAuth) {
+      throw new Error('Unauthenticated')
+    }
+    try {
+      const getLeague = await League.findById(args.leagueId).populate('league')
+      const league = {
+        ...getLeague.league._doc,
+        _id: getLeague.league._id,
+        leagueCreator: user.bind(this, getLeague.league._doc.leagueCreator)
+      }
+      return league
     } catch (err) {
       throw err
     }

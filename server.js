@@ -3,14 +3,15 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const cors = require('cors')
-const graphqlHttp = require('express-graphql')
-
-const graphqlSchema = require('./graphql/schema/index')
-const graphqlResolvers = require('./graphql/resolvers/index')
+// const graphqlHttp = require('express-graphql')
+//
+// const graphqlSchema = require('./graphql/schema/index')
+// const graphqlResolvers = require('./graphql/resolvers/index')
 
 // require route files
 const exampleRoutes = require('./app/routes/example_routes')
 const userRoutes = require('./app/routes/user_routes')
+const leagueRoutes = require('./app/routes/league_routes')
 
 // require error handling middleware
 const errorHandler = require('./lib/error_handler')
@@ -21,7 +22,7 @@ const db = require('./config/db')
 
 // require configured passport authentication middleware
 const auth = require('./lib/auth')
-const isAuth = require('./middleware/is-auth')
+// const isAuth = require('./middleware/is-auth')
 
 // establish database connection
 mongoose.Promise = global.Promise
@@ -39,23 +40,23 @@ app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:7165' }))
 // define port for API to run on
 const port = process.env.PORT || 4741
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200)
-  }
-  next()
-})
+// app.use((req, res, next) => {
+//   res.setHeader('Access-Control-Allow-Origin', '*')
+//   res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS')
+//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+//   if (req.method === 'OPTIONS') {
+//     return res.sendStatus(200)
+//   }
+//   next()
+// })
 
-app.use(isAuth)
+// app.use(isAuth)
 
-app.use('/graphql', graphqlHttp({
-  schema: graphqlSchema,
-  rootValue: graphqlResolvers,
-  graphiql: true
-}))
+// app.use('/graphql', graphqlHttp({
+//   schema: graphqlSchema,
+//   rootValue: graphqlResolvers,
+//   graphiql: true
+// }))
 
 // this middleware makes it so the client can use the Rails convention
 // of `Authorization: Token token=<token>` OR the Express convention of
@@ -83,6 +84,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 // register route files
 app.use(exampleRoutes)
 app.use(userRoutes)
+app.use(leagueRoutes)
 
 // register error handling middleware
 // note that this comes after the route middlewares, because it needs to be

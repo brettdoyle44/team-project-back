@@ -19,13 +19,14 @@ const leagueSchema = new Schema({
     type: Number,
     required: true
   },
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+  dateStart: {
+    type: Date,
     required: true
+  },
+  leagueCreator: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   }
-}, {
-  timestamps: true
 })
 
 module.exports = mongoose.model('League', leagueSchema)

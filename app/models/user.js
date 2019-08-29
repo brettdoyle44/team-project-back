@@ -1,22 +1,25 @@
 const mongoose = require('mongoose')
 
-const Schema = mongoose.Schema
-
-const userSchema = new Schema({
+const restUserSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
-  password: {
+  hashedPassword: {
     type: String,
     required: true
   },
-  createdLeagues: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'League'
+  token: String
+}, {
+  timestamps: true,
+  toObject: {
+    // remove `hashedPassword` field when we call `.toObject`
+    transform: (_doc, user) => {
+      delete user.hashedPassword
+      return user
     }
-  ]
+  }
 })
 
-module.exports = mongoose.model('User', userSchema)
+module.exports = mongoose.model('User', restUserSchema)

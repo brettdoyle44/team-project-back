@@ -2,6 +2,7 @@ const { buildSchema } = require('graphql')
 
 module.exports = buildSchema(`
   type JoinLeague {
+    _id: ID!
     league: League!
     user: User!
     createdAt: String!
@@ -48,7 +49,6 @@ module.exports = buildSchema(`
     leagues: [League!]!
     joinLeagues: [JoinLeague!]!
     login(email: String!, password: String!): UserAuth!
-
   }
 
   type RootMutation {

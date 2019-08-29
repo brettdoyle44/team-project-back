@@ -1,19 +1,14 @@
 const League = require('../../app/models/league')
-const { user } = require('./merge')
+// const { user } = require('./merge')
 const User = require('../../app/models/user')
+const { transformLeague } = require('./merge')
 
 module.exports = {
   leagues: async () => {
     try {
       const leagues = await League.find()
-        .populate('leagueCreator')
       return leagues.map(league => {
-        return {
-          ...league._doc,
-          _id: league.id,
-          dateStart: new Date(league._doc.dateStart).toISOString(),
-          creator: user.bind(this, league._doc.creator)
-        }
+        return transformLeague(league)
       })
     } catch (err) {
       throw err
@@ -34,17 +29,13 @@ module.exports = {
     let createdLeague
     try {
       const result = await league.save()
-      createdLeague = {
-        ...result._doc,
-        _id: result._doc._id.toString(),
-        dateStart: new Date(league._doc.dateStart).toISOString(),
-        leagueCreator: user.bind(this, result._doc.creator)
-      }
-      const singleUser = await User.findById(req.userId)
-      if (!singleUser) {
+      createdLeague = transformLeague(result)
+      const leagueCreator = await User.findById(req.userId)
+      if (!leagueCreator) {
         throw new Error('User not found.')
       }
-      singleUser.createdLeagues.push(league)
+      leagueCreator.createdLeagues.push(league)
+      await leagueCreator.save()
       return createdLeague
     } catch (err) {
       throw err
